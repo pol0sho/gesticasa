@@ -45,7 +45,7 @@ app.post('/register', async (req, res) => {
     } else if (err.detail.includes('real_estate_name')) {
       return res.status(400).send('This real estate name is already in use.');
     } else if (err.detail.includes('subdomain')) {
-      return res.status(400).send('This subdomain already exists.');
+      return res.status(400).send('This real estate name is already in use.');
     }
   }
 
