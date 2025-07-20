@@ -69,10 +69,22 @@ app.post('/login', loginLimiter, async (req, res) => {
   }
 });
 
-// 🔓 Logout
+// 🔓 Logout and destroy session + cookie
 app.post('/logout', (req, res) => {
   req.session.destroy(err => {
-    if (err) return res.status(500).send('Could not log out.');
+    if (err) {
+      console.error('Error destroying session:', err);
+      return res.status(500).send('Could not log out.');
+    }
+
+    // ✅ Clear the cookie so browser doesn't send it anymore
+    res.clearCookie('connect.sid', {
+      path: '/',
+      secure: process.env.NODE_ENV === 'production',
+      httpOnly: true,
+      sameSite: 'lax'
+    });
+
     res.send('Logout successful!');
   });
 });
