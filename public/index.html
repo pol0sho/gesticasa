@@ -4,21 +4,40 @@
   <title>Register</title>
 </head>
 <body>
-  <h1>Register</h1>
-  <form action="/register" method="POST">
-    <label>Email:</label><br>
-    <input type="email" name="email" required><br><br>
+<form id="registerForm">
+  <input type="email" name="email" placeholder="Email" required><br>
+  <input type="password" name="password" placeholder="Password" required><br>
+  <input type="password" name="confirmPassword" placeholder="Confirm Password" required><br>
+  <input type="text" name="realEstateName" placeholder="Real Estate Name" required><br>
+  <button type="submit">Register</button>
+</form>
 
-    <label>Password:</label><br>
-    <input type="password" name="password" required><br><br>
+<p id="message" style="color: red;"></p>
 
-    <label>Confirm Password:</label><br>
-    <input type="password" name="confirmPassword" required><br><br>
+<script>
+  const form = document.getElementById('registerForm');
+  const message = document.getElementById('message');
 
-    <label>Real Estate Name:</label><br>
-    <input type="text" name="realEstateName" required><br><br>
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
 
-    <button type="submit">Register</button>
-  </form>
+    const formData = new FormData(form);
+    const data = new URLSearchParams(formData);
+
+    const response = await fetch('/register', {
+      method: 'POST',
+      body: data
+    });
+
+    const text = await response.text();
+    if (!response.ok) {
+      message.textContent = text; // show error from server
+    } else {
+      message.style.color = 'green';
+      message.textContent = text; // success message
+      form.reset();
+    }
+  });
+</script>
 </body>
 </html>

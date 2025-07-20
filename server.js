@@ -37,9 +37,20 @@ app.post('/register', async (req, res) => {
 
     res.send('Registration successful!');
   } catch (err) {
-    console.error(err);
-    res.status(500).send('Error saving user.');
+  console.error(err);
+
+  if (err.code === '23505') { // PostgreSQL unique_violation error code
+    if (err.detail.includes('email')) {
+      return res.status(400).send('This email is already registered.');
+    } else if (err.detail.includes('real_estate_name')) {
+      return res.status(400).send('This real estate name is already in use.');
+    } else if (err.detail.includes('subdomain')) {
+      return res.status(400).send('This subdomain already exists.');
+    }
   }
+
+  res.status(500).send('Error saving user.');
+}
 });
 
 app.listen(PORT, () => {
