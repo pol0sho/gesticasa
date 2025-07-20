@@ -3,11 +3,24 @@ document.addEventListener('DOMContentLoaded', () => {
   const subdomainPreview = document.getElementById('subdomainPreview');
   const message = document.getElementById('message');
 
-  const registerPasswordInput = document.querySelector('#registerForm input[name="password"]');
+  const registerForm = document.getElementById('registerForm');
+  const loginForm = document.getElementById('loginForm');
+  const logoutBtn = document.getElementById('logoutBtn');
+
+  const registerPasswordInput = registerForm?.querySelector('input[name="password"]');
   const strengthBar = document.getElementById('strengthLevel');
   const strengthText = document.getElementById('strengthText');
 
-  // Password strength logic
+  // 🔐 Password strength logic
+  function getPasswordStrength(pw) {
+    let score = 0;
+    if (pw.length >= 8) score++;
+    if (/[A-Z]/.test(pw)) score++;
+    if (/[0-9]/.test(pw)) score++;
+    if (/[^A-Za-z0-9]/.test(pw)) score++;
+    return Math.min(score - 1, 3);
+  }
+
   registerPasswordInput?.addEventListener('input', () => {
     const value = registerPasswordInput.value;
     const score = getPasswordStrength(value);
@@ -20,16 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
     strengthText.textContent = labels[score];
   });
 
-  function getPasswordStrength(pw) {
-    let score = 0;
-    if (pw.length >= 8) score++;
-    if (/[A-Z]/.test(pw)) score++;
-    if (/[0-9]/.test(pw)) score++;
-    if (/[^A-Za-z0-9]/.test(pw)) score++;
-    return Math.min(score - 1, 3); // Max out at "Strong"
-  }
-
-  // Toggle between login and register
+  // 🔄 Form toggle
   document.getElementById('showLogin')?.addEventListener('click', () => {
     document.getElementById('registerSection').classList.add('hidden');
     document.getElementById('loginSection').classList.remove('hidden');
@@ -40,6 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('registerSection').classList.remove('hidden');
   });
 
+  // 🌐 Real estate subdomain preview
   realEstateInput?.addEventListener('input', () => {
     const value = realEstateInput.value.trim().toLowerCase().replace(/\s+/g, '');
     subdomainPreview.innerHTML = value
@@ -47,32 +52,44 @@ document.addEventListener('DOMContentLoaded', () => {
       : `CRM url preview: <strong>yourrealestate.gesticasa.com</strong>`;
   });
 
-  // Register
-  document.getElementById('registerForm').addEventListener('submit', async (e) => {
+  // 📝 Register with password strength + stripe checkout
+  registerForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
 
     const strength = getPasswordStrength(registerPasswordInput.value);
     if (strength < 2) {
-      message.textContent = 'Password too weak. Use 8+ characters, uppercase, numbers, and symbols.';
+      message.textContent = 'Password too weak. Use 8+ chars, uppercase, numbers, symbols.';
       message.style.color = 'red';
       return;
     }
 
-    const data = new URLSearchParams(new FormData(e.target));
-    const res = await fetch('/register', { method: 'POST', body: data });
-    const text = await res.text();
-    message.textContent = text;
-    message.style.color = res.ok ? 'green' : 'red';
+    const formData = new FormData(e.target);
+    const plainData = Object.fromEntries(formData.entries());
 
-    if (res.ok) {
-      e.target.reset();
-      document.getElementById('registerSection').classList.add('hidden');
-      document.getElementById('loginSection').classList.remove('hidden');
+    try {
+      const res = await fetch('/create-checkout-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(plainData)
+      });
+
+      const result = await res.json();
+
+      if (result.url) {
+        window.location.href = result.url;
+      } else {
+        message.textContent = 'Failed to initiate payment.';
+        message.style.color = 'red';
+      }
+    } catch (err) {
+      console.error('Error creating checkout session:', err);
+      message.textContent = 'Something went wrong.';
+      message.style.color = 'red';
     }
   });
 
-  // Login
-  document.getElementById('loginForm').addEventListener('submit', async (e) => {
+  // 🔐 Login
+  loginForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const data = new URLSearchParams(new FormData(e.target));
     const res = await fetch('/login', { method: 'POST', body: data });
@@ -86,8 +103,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Logout
-  document.getElementById('logoutBtn').addEventListener('click', async () => {
+  // 🔓 Logout
+  logoutBtn?.addEventListener('click', async () => {
     const res = await fetch('/logout', { method: 'POST' });
     const text = await res.text();
     message.textContent = text;

@@ -7,43 +7,41 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const pgSession = require('connect-pg-simple')(session);
 const { Pool } = require('pg');
-
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// 🛡️ Basic HTTP security headers
+// 🛡️ HTTP security headers
 app.use(helmet());
+app.set('trust proxy', 1); // Fixes "X-Forwarded-For" proxy issue
 
-// 🧱 Body parser for form input
+// 🧱 Parsers
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
 app.use(express.static('public'));
 
-// 🧠 PostgreSQL pool for session store
+// 🧠 PostgreSQL pool
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false }
 });
 
-// 💾 Persistent session storage with cleanup
+// 💾 Sessions
 app.use(session({
-  store: new pgSession({
-    pool,
-    tableName: 'session',
-    pruneSessionInterval: 60 // clean expired sessions every 60s
-  }),
+  store: new pgSession({ pool, tableName: 'session', pruneSessionInterval: 60 }),
   secret: process.env.SESSION_SECRET || 'fallback_dev_secret',
   resave: false,
   saveUninitialized: false,
   cookie: {
     secure: process.env.NODE_ENV === 'production',
-    maxAge: 1000 * 60 * 60 * 2 // 2 hours
+    maxAge: 1000 * 60 * 60 * 2
   }
 }));
 
-// 🚫 Rate limiter for login route to prevent brute-force
+// 🚫 Rate limit login
 const loginLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // limit to 5 requests per IP
+  windowMs: 15 * 60 * 1000,
+  max: 5,
   message: 'Too many login attempts. Try again in 15 minutes.'
 });
 
@@ -52,14 +50,11 @@ app.post('/login', loginLimiter, async (req, res) => {
   const { email, password } = req.body;
   try {
     const result = await db.query('SELECT * FROM users WHERE email = $1', [email]);
-    if (result.rows.length === 0) {
-      return res.status(400).send('Invalid email or password.');
-    }
+    if (result.rows.length === 0) return res.status(400).send('Invalid email or password.');
     const user = result.rows[0];
     const match = await bcrypt.compare(password, user.password);
-    if (!match) {
-      return res.status(400).send('Invalid email or password.');
-    }
+    if (!match) return res.status(400).send('Invalid email or password.');
+
     req.session.userId = user.id;
     req.session.email = user.email;
     res.send('Login successful!');
@@ -69,71 +64,86 @@ app.post('/login', loginLimiter, async (req, res) => {
   }
 });
 
-// 🔓 Logout and destroy session + cookie
+// 🔓 Logout
 app.post('/logout', (req, res) => {
   req.session.destroy(err => {
-    if (err) {
-      console.error('Error destroying session:', err);
-      return res.status(500).send('Could not log out.');
-    }
-
-    // ✅ Clear the cookie so browser doesn't send it anymore
+    if (err) return res.status(500).send('Could not log out.');
     res.clearCookie('connect.sid', {
       path: '/',
       secure: process.env.NODE_ENV === 'production',
       httpOnly: true,
       sameSite: 'lax'
     });
-
     res.send('Logout successful!');
   });
 });
 
-// 📝 Register
-app.post('/register', async (req, res) => {
-  const { email, password, confirmPassword, realEstateName } = req.body;
+// 💳 Create Stripe Checkout session
+app.post('/create-checkout-session', async (req, res) => {
+  const { email, password, realEstateName } = req.body;
 
-  if (password !== confirmPassword) {
-    return res.status(400).send('Passwords do not match.');
-  }
+  if (!email || !password || !realEstateName)
+    return res.status(400).send('Missing fields.');
 
-  try {
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    const subdomain = realEstateName.replace(/\s+/g, '').toLowerCase() + '.gesticasa.com';
-
-    const insertUserQuery = `
-      INSERT INTO users (email, password, real_estate_name, subdomain)
-      VALUES ($1, $2, $3, $4)
-      RETURNING id
-    `;
-
-    const result = await db.query(insertUserQuery, [
+  const session = await stripe.checkout.sessions.create({
+    payment_method_types: ['card'],
+    mode: 'payment',
+    customer_email: email,
+    line_items: [{
+      price_data: {
+        currency: 'eur',
+        product_data: {
+          name: 'Gesticasa Registration',
+          description: `For ${realEstateName}`
+        },
+        unit_amount: 1999
+      },
+      quantity: 1
+    }],
+    success_url: `${process.env.BASE_URL || 'http://localhost:3000'}/success?session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${process.env.BASE_URL || 'http://localhost:3000'}/register`,
+    metadata: {
       email,
-      hashedPassword,
-      realEstateName,
-      subdomain
-    ]);
-
-    res.send('Registration successful!');
-  } catch (err) {
-    console.error(err);
-
-    if (err.code === '23505') { // PostgreSQL unique_violation error code
-      if (err.detail.includes('email')) {
-        return res.status(400).send('This email is already registered.');
-      } else if (err.detail.includes('real_estate_name')) {
-        return res.status(400).send('This real estate name is already in use.');
-      } else if (err.detail.includes('subdomain')) {
-        return res.status(400).send('This real estate name is already in use.');
-      }
+      password,
+      realEstateName
     }
+  });
 
-    res.status(500).send('Error saving user.');
-  }
+  res.json({ url: session.url });
 });
 
-// ✅ Run server
+// 📬 Webhook to finalize registration
+app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+  const sig = req.headers['stripe-signature'];
+  let event;
+
+  try {
+    event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
+  } catch (err) {
+    console.error('Webhook error:', err.message);
+    return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+
+  if (event.type === 'checkout.session.completed') {
+    const session = event.data.object;
+    const { email, password, realEstateName } = session.metadata;
+    const subdomain = realEstateName.replace(/\s+/g, '').toLowerCase() + '.gesticasa.com';
+
+    try {
+      const hashedPassword = await bcrypt.hash(password, 10);
+      await db.query(`
+        INSERT INTO users (email, password, real_estate_name, subdomain)
+        VALUES ($1, $2, $3, $4)
+      `, [email, hashedPassword, realEstateName, subdomain]);
+    } catch (err) {
+      if (err.code !== '23505') console.error('User creation error after payment:', err);
+    }
+  }
+
+  res.json({ received: true });
+});
+
+// ✅ Server start
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
