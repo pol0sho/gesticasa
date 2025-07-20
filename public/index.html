@@ -92,7 +92,8 @@
           <input type="text" name="realEstateName" id="realEstateName" placeholder="Real Estate Name" required />
           <button type="submit">Register</button>
         </form>
-        <p class="switch-link" onclick="showLogin()">Already have an account? Login</p>
+        <p id="showLogin" class="switch-link">Already have an account? Login</p>
+
       </div>
 
       <!-- Login -->
@@ -103,7 +104,7 @@
           <input type="password" name="password" placeholder="Password" required />
           <button type="submit">Login</button>
         </form>
-        <p class="switch-link" onclick="showRegister()">Don't have an account? Register</p>
+       <p id="showRegister" class="switch-link">Don't have an account? Register</p>
       </div>
     </div>
 
@@ -122,6 +123,16 @@
     const subdomainPreview = document.getElementById('subdomainPreview');
     const message = document.getElementById('message');
 
+    document.getElementById('showLogin')?.addEventListener('click', () => {
+  document.getElementById('registerSection').classList.add('hidden');
+  document.getElementById('loginSection').classList.remove('hidden');
+});
+
+document.getElementById('showRegister')?.addEventListener('click', () => {
+  document.getElementById('loginSection').classList.add('hidden');
+  document.getElementById('registerSection').classList.remove('hidden');
+});
+
     realEstateInput?.addEventListener('input', () => {
       const value = realEstateInput.value.trim().toLowerCase().replace(/\s+/g, '');
       subdomainPreview.innerHTML = value
@@ -137,7 +148,11 @@
       const text = await res.text();
       message.textContent = text;
       message.style.color = res.ok ? 'green' : 'red';
-      if (res.ok) e.target.reset();
+      if (res.ok) {
+  e.target.reset();
+  document.getElementById('registerSection').classList.add('hidden');
+  document.getElementById('loginSection').classList.remove('hidden');
+}
     });
 
     // Login
@@ -166,16 +181,7 @@
       document.getElementById('logoutSection').classList.add('hidden');
     });
 
-    // Toggle between forms
-    window.showLogin = function () {
-      document.getElementById('registerSection').classList.add('hidden');
-      document.getElementById('loginSection').classList.remove('hidden');
-    };
 
-    window.showRegister = function () {
-      document.getElementById('loginSection').classList.add('hidden');
-      document.getElementById('registerSection').classList.remove('hidden');
-    };
   });
 </script>
 
