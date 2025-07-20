@@ -14,9 +14,6 @@ const PORT = process.env.PORT || 3000;
 // 🛡️ Basic HTTP security headers
 app.use(helmet());
 
-// 🧱 Body parser for form input
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(express.static('public'));
 
 // 🧠 PostgreSQL pool for session store
 const pool = new Pool({
