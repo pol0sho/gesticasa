@@ -71,13 +71,28 @@
       <input type="email" name="email" placeholder="Email" required />
       <input type="password" name="password" placeholder="Password" required />
       <input type="password" name="confirmPassword" placeholder="Confirm Password" required />
-      <input type="text" name="realEstateName" placeholder="Real Estate Name" required />
+      <label for="realEstateName">Real Estate Name</label>
+      <p id="subdomainPreview" style="font-size: 14px; color: #555; margin-top: 5px; margin-bottom: 10px;">
+      Your subdomain: <strong>yourname.inmosuite.com</strong>
+      </p>
+      <input type="text" name="realEstateName" id="realEstateName" placeholder="Real Estate Name" required />
       <button type="submit">Register</button>
     </form>
     <p id="message"></p>
   </div>
 
   <script>
+
+const realEstateInput = document.getElementById('realEstateName');
+const subdomainPreview = document.getElementById('subdomainPreview');
+
+realEstateInput.addEventListener('input', () => {
+  const value = realEstateInput.value.trim().toLowerCase().replace(/\s+/g, '');
+  subdomainPreview.innerHTML = value
+    ? `Your subdomain: <strong>${value}.inmosuite.com</strong>`
+    : `Your subdomain: <strong>yourrealestate.inmosuite.com</strong>`;
+});
+
     const form = document.getElementById('registerForm');
     const message = document.getElementById('message');
 
