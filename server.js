@@ -19,8 +19,9 @@ const pool = new Pool({
 
 app.use(session({
   store: new pgSession({
-    pool,                // Reuse your existing pool
-    tableName: 'session' // Default is 'session'
+    pool,                 
+    tableName: 'session', 
+    pruneSessionInterval: 60 // 
   }),
   secret: process.env.SESSION_SECRET || 'fallback_dev_secret',
   resave: false,
