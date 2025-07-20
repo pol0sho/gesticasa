@@ -3,39 +3,20 @@ document.addEventListener('DOMContentLoaded', () => {
   const subdomainPreview = document.getElementById('subdomainPreview');
   const message = document.getElementById('message');
 
-  const passwordInput = document.querySelector('input[name="password"]');
-  const strengthBar = document.createElement('div');
-  const strengthLevel = document.createElement('div');
-  const strengthText = document.createElement('small');
+  const registerPasswordInput = document.querySelector('#registerForm input[name="password"]');
+  const strengthBar = document.getElementById('strengthLevel');
+  const strengthText = document.getElementById('strengthText');
 
-  // Setup strength bar
-  strengthBar.style.height = '6px';
-  strengthBar.style.background = '#ddd';
-  strengthBar.style.borderRadius = '3px';
-  strengthBar.style.marginTop = '-10px';
-  strengthBar.style.marginBottom = '10px';
-  strengthBar.appendChild(strengthLevel);
+  // Password strength logic
+  registerPasswordInput?.addEventListener('input', () => {
+    const value = registerPasswordInput.value;
+    const score = getPasswordStrength(value);
 
-  strengthLevel.style.height = '100%';
-  strengthLevel.style.width = '0%';
-  strengthLevel.style.background = 'red';
-  strengthLevel.style.transition = 'width 0.3s';
-
-  strengthText.style.display = 'block';
-  strengthText.style.textAlign = 'center';
-  strengthText.style.color = '#555';
-
-  passwordInput.parentNode.insertBefore(strengthBar, passwordInput.nextSibling);
-  strengthBar.parentNode.insertBefore(strengthText, strengthBar.nextSibling);
-
-  passwordInput.addEventListener('input', () => {
-    const val = passwordInput.value;
-    const score = getPasswordStrength(val);
     const colors = ['red', 'orange', '#ffc107', '#2ecc71'];
     const labels = ['Very Weak', 'Weak', 'Okay', 'Strong'];
 
-    strengthLevel.style.width = `${(score + 1) * 25}%`;
-    strengthLevel.style.background = colors[score];
+    strengthBar.style.width = `${(score + 1) * 25}%`;
+    strengthBar.style.background = colors[score];
     strengthText.textContent = labels[score];
   });
 
@@ -45,9 +26,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (/[A-Z]/.test(pw)) score++;
     if (/[0-9]/.test(pw)) score++;
     if (/[^A-Za-z0-9]/.test(pw)) score++;
-    return Math.min(score - 1, 3);
+    return Math.min(score - 1, 3); // Max out at "Strong"
   }
 
+  // Toggle between login and register
   document.getElementById('showLogin')?.addEventListener('click', () => {
     document.getElementById('registerSection').classList.add('hidden');
     document.getElementById('loginSection').classList.remove('hidden');
@@ -65,10 +47,11 @@ document.addEventListener('DOMContentLoaded', () => {
       : `CRM url preview: <strong>yourrealestate.gesticasa.com</strong>`;
   });
 
+  // Register
   document.getElementById('registerForm').addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    const strength = getPasswordStrength(passwordInput.value);
+    const strength = getPasswordStrength(registerPasswordInput.value);
     if (strength < 2) {
       message.textContent = 'Password too weak. Use 8+ characters, uppercase, numbers, and symbols.';
       message.style.color = 'red';
@@ -88,6 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  // Login
   document.getElementById('loginForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const data = new URLSearchParams(new FormData(e.target));
@@ -102,6 +86,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  // Logout
   document.getElementById('logoutBtn').addEventListener('click', async () => {
     const res = await fetch('/logout', { method: 'POST' });
     const text = await res.text();
