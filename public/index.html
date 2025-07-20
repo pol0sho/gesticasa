@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Register | Habiflo</title>
+  <title>Register | Gesticasa - Next-Gen Realty CRM | Simplify. Automate. Succeed.</title>
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -72,7 +72,7 @@
       <input type="password" name="password" placeholder="Password" required />
       <input type="password" name="confirmPassword" placeholder="Confirm Password" required />
       <p id="subdomainPreview" style="font-size: 14px; color: #555; margin-top: 5px; margin-bottom: 10px;">
-      Portal subdomain preview: <strong>yourrealestate.habiflo.com</strong>
+      Crm url preview: <strong>yourrealestate.gesticasa.com</strong>
       </p>
       <input type="text" name="realEstateName" id="realEstateName" placeholder="Real Estate Name" required />
       <button type="submit">Register</button>
@@ -88,8 +88,8 @@ const subdomainPreview = document.getElementById('subdomainPreview');
 realEstateInput.addEventListener('input', () => {
   const value = realEstateInput.value.trim().toLowerCase().replace(/\s+/g, '');
   subdomainPreview.innerHTML = value
-    ? `Portal subdomain preview: <strong>${value}.habiflo.com</strong>`
-    : `Portal subdomain preview: <strong>yourrealestate.habiflo.com</strong>`;
+    ? `Portal subdomain preview: <strong>${value}.gesticasa.com</strong>`
+    : `Portal subdomain preview: <strong>yourrealestate.gesticasa.com</strong>`;
 });
 
     const form = document.getElementById('registerForm');
