@@ -1,14 +1,51 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const db = require('./db');
-const path = require('path');
 const bcrypt = require('bcrypt');
-
+const session = require('express-session');
 const app = express();
-const PORT = process.env.PORT || 3000;
 
+const PORT = process.env.PORT || 3000;
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static('public'));
+
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'fallback_dev_secret', // ✅ real env var
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production'  // ⬅ set true only if HTTPS
+  }
+}));
+// Login route
+app.post('/login', async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    const result = await db.query('SELECT * FROM users WHERE email = $1', [email]);
+    if (result.rows.length === 0) {
+      return res.status(400).send('Invalid email or password.');
+    }
+    const user = result.rows[0];
+    const match = await bcrypt.compare(password, user.password);
+    if (!match) {
+      return res.status(400).send('Invalid email or password.');
+    }
+    req.session.userId = user.id;
+    req.session.email = user.email;
+    res.send('Login successful!');
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Server error.');
+  }
+});
+
+// Logout route
+app.post('/logout', (req, res) => {
+  req.session.destroy(err => {
+    if (err) return res.status(500).send('Could not log out.');
+    res.send('Logout successful!');
+  });
+});
 
 app.post('/register', async (req, res) => {
   const { email, password, confirmPassword, realEstateName } = req.body;
