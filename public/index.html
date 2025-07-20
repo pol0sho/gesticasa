@@ -1,43 +1,113 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Register</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Register | InmoSuite</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f4f6f9;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .form-container {
+      background: white;
+      padding: 40px;
+      border-radius: 10px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 400px;
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 25px;
+      color: #333;
+    }
+
+    input[type="email"],
+    input[type="password"],
+    input[type="text"] {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 15px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      background-color: #1e90ff;
+      border: none;
+      border-radius: 6px;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    button:hover {
+      background-color: #0d6efd;
+    }
+
+    #message {
+      text-align: center;
+      margin-top: 15px;
+      font-size: 14px;
+    }
+  </style>
 </head>
 <body>
-<form id="registerForm">
-  <input type="email" name="email" placeholder="Email" required><br>
-  <input type="password" name="password" placeholder="Password" required><br>
-  <input type="password" name="confirmPassword" placeholder="Confirm Password" required><br>
-  <input type="text" name="realEstateName" placeholder="Real Estate Name" required><br>
-  <button type="submit">Register</button>
-</form>
+  <div class="form-container">
+    <h2>Register</h2>
+    <form id="registerForm">
+      <input type="email" name="email" placeholder="Email" required />
+      <input type="password" name="password" placeholder="Password" required />
+      <input type="password" name="confirmPassword" placeholder="Confirm Password" required />
+      <input type="text" name="realEstateName" placeholder="Real Estate Name" required />
+      <button type="submit">Register</button>
+    </form>
+    <p id="message"></p>
+  </div>
 
-<p id="message" style="color: red;"></p>
+  <script>
+    const form = document.getElementById('registerForm');
+    const message = document.getElementById('message');
 
-<script>
-  const form = document.getElementById('registerForm');
-  const message = document.getElementById('message');
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
 
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
+      const formData = new FormData(form);
+      const data = new URLSearchParams(formData);
 
-    const formData = new FormData(form);
-    const data = new URLSearchParams(formData);
+      try {
+        const response = await fetch('/register', {
+          method: 'POST',
+          body: data
+        });
 
-    const response = await fetch('/register', {
-      method: 'POST',
-      body: data
+        const text = await response.text();
+
+        if (!response.ok) {
+          message.style.color = 'red';
+          message.textContent = text;
+        } else {
+          message.style.color = 'green';
+          message.textContent = text;
+          form.reset();
+        }
+      } catch (err) {
+        message.style.color = 'red';
+        message.textContent = 'Something went wrong. Please try again.';
+      }
     });
-
-    const text = await response.text();
-    if (!response.ok) {
-      message.textContent = text; // show error from server
-    } else {
-      message.style.color = 'green';
-      message.textContent = text; // success message
-      form.reset();
-    }
-  });
-</script>
+  </script>
 </body>
 </html>
