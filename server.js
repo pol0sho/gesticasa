@@ -3,36 +3,52 @@ const bodyParser = require('body-parser');
 const db = require('./db');
 const bcrypt = require('bcrypt');
 const session = require('express-session');
-const app = express();
-
-const PORT = process.env.PORT || 3000;
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(express.static('public'));
-
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 const pgSession = require('connect-pg-simple')(session);
 const { Pool } = require('pg');
 
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// 🛡️ Basic HTTP security headers
+app.use(helmet());
+
+// 🧱 Body parser for form input
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(express.static('public'));
+
+// 🧠 PostgreSQL pool for session store
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false }
 });
 
+// 💾 Persistent session storage with cleanup
 app.use(session({
   store: new pgSession({
-    pool,                 
-    tableName: 'session', 
-    pruneSessionInterval: 60 // 
+    pool,
+    tableName: 'session',
+    pruneSessionInterval: 60 // clean expired sessions every 60s
   }),
   secret: process.env.SESSION_SECRET || 'fallback_dev_secret',
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: process.env.NODE_ENV === 'production'
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 1000 * 60 * 60 * 2 // 2 hours
   }
 }));
 
-// Login route
-app.post('/login', async (req, res) => {
+// 🚫 Rate limiter for login route to prevent brute-force
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // limit to 5 requests per IP
+  message: 'Too many login attempts. Try again in 15 minutes.'
+});
+
+// 🔐 Login
+app.post('/login', loginLimiter, async (req, res) => {
   const { email, password } = req.body;
   try {
     const result = await db.query('SELECT * FROM users WHERE email = $1', [email]);
@@ -53,7 +69,7 @@ app.post('/login', async (req, res) => {
   }
 });
 
-// Logout route
+// 🔓 Logout
 app.post('/logout', (req, res) => {
   req.session.destroy(err => {
     if (err) return res.status(500).send('Could not log out.');
@@ -61,6 +77,7 @@ app.post('/logout', (req, res) => {
   });
 });
 
+// 📝 Register
 app.post('/register', async (req, res) => {
   const { email, password, confirmPassword, realEstateName } = req.body;
 
@@ -88,22 +105,23 @@ app.post('/register', async (req, res) => {
 
     res.send('Registration successful!');
   } catch (err) {
-  console.error(err);
+    console.error(err);
 
-  if (err.code === '23505') { // PostgreSQL unique_violation error code
-    if (err.detail.includes('email')) {
-      return res.status(400).send('This email is already registered.');
-    } else if (err.detail.includes('real_estate_name')) {
-      return res.status(400).send('This real estate name is already in use.');
-    } else if (err.detail.includes('subdomain')) {
-      return res.status(400).send('This real estate name is already in use.');
+    if (err.code === '23505') { // PostgreSQL unique_violation error code
+      if (err.detail.includes('email')) {
+        return res.status(400).send('This email is already registered.');
+      } else if (err.detail.includes('real_estate_name')) {
+        return res.status(400).send('This real estate name is already in use.');
+      } else if (err.detail.includes('subdomain')) {
+        return res.status(400).send('This real estate name is already in use.');
+      }
     }
-  }
 
-  res.status(500).send('Error saving user.');
-}
+    res.status(500).send('Error saving user.');
+  }
 });
 
+// ✅ Run server
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
