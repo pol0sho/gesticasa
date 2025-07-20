@@ -13,20 +13,27 @@ app.use(express.static('public'));
 app.post('/register', async (req, res) => {
   const { email, password, confirmPassword, realEstateName } = req.body;
 
-  // Basic validation
   if (password !== confirmPassword) {
     return res.status(400).send('Passwords do not match.');
   }
 
   try {
-    // Hash the password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Save to DB
-    await db.query(
-      'INSERT INTO users (email, password, real_estate_name) VALUES ($1, $2, $3)',
-      [email, hashedPassword, realEstateName]
-    );
+    const subdomain = realEstateName.replace(/\s+/g, '').toLowerCase() + '.inmosuite.com';
+
+    const insertUserQuery = `
+      INSERT INTO users (email, password, real_estate_name, subdomain)
+      VALUES ($1, $2, $3, $4)
+      RETURNING id
+    `;
+
+    const result = await db.query(insertUserQuery, [
+      email,
+      hashedPassword,
+      realEstateName,
+      subdomain
+    ]);
 
     res.send('Registration successful!');
   } catch (err) {
