@@ -9,14 +9,27 @@ const PORT = process.env.PORT || 3000;
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static('public'));
 
+const pgSession = require('connect-pg-simple')(session);
+const { Pool } = require('pg');
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false }
+});
+
 app.use(session({
-  secret: process.env.SESSION_SECRET || 'fallback_dev_secret', // ✅ real env var
+  store: new pgSession({
+    pool,                // Reuse your existing pool
+    tableName: 'session' // Default is 'session'
+  }),
+  secret: process.env.SESSION_SECRET || 'fallback_dev_secret',
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: process.env.NODE_ENV === 'production'  // ⬅ set true only if HTTPS
+    secure: process.env.NODE_ENV === 'production'
   }
 }));
+
 // Login route
 app.post('/login', async (req, res) => {
   const { email, password } = req.body;
