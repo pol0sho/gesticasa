@@ -20,7 +20,7 @@ app.post('/register', async (req, res) => {
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const subdomain = realEstateName.replace(/\s+/g, '').toLowerCase() + '.inmosuite.com';
+    const subdomain = realEstateName.replace(/\s+/g, '').toLowerCase() + '.habidesk.com';
 
     const insertUserQuery = `
       INSERT INTO users (email, password, real_estate_name, subdomain)
