@@ -11,17 +11,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const strengthBar = document.getElementById('strengthLevel');
   const strengthText = document.getElementById('strengthText');
 
-  const settingsIcon = document.getElementById('settingsIcon');
-  const agentModal = document.getElementById('agentModal');
+  const agentSection = document.getElementById('agentSection');
   const inviteAgentForm = document.getElementById('inviteAgentForm');
   const agentList = document.getElementById('agentList');
-
-  document.getElementById('closeAgentBtn')?.addEventListener('click', () => {
-  agentModal.classList.add('hidden');
-});
-
-  // Force-close modal on initial load
-  agentModal.classList.add('hidden');
 
   let agents = JSON.parse(localStorage.getItem('agents') || '[]');
 
@@ -29,39 +21,23 @@ document.addEventListener('DOMContentLoaded', () => {
     agentList.innerHTML = '';
     agents.forEach((agent, index) => {
       const li = document.createElement('li');
-li.innerHTML = `
-  <span>${agent.email}</span>
-  <span class="${agent.status === 'pending' ? 'agent-status-pending' : 'agent-status-active'}">
-    ${agent.status === 'pending' ? 'Email sent, waiting for activation' : 'Agent active'}
-  </span>
-  <span class="agent-remove">✖</span>
-`;
-
-li.querySelector('.agent-remove')?.addEventListener('click', () => {
-  const sure = confirm('Are you sure you want to remove this agent?');
-  if (!sure) return;
-  agents.splice(index, 1);
-  localStorage.setItem('agents', JSON.stringify(agents));
-  renderAgents();
-});
+      li.innerHTML = `
+        <span>${agent.email}</span>
+        <span class="${agent.status === 'pending' ? 'agent-status-pending' : 'agent-status-active'}">
+          ${agent.status === 'pending' ? 'Email sent, waiting for activation' : 'Agent active'}
+        </span>
+        <span class="agent-remove">✖</span>
+      `;
+      li.querySelector('.agent-remove')?.addEventListener('click', () => {
+        const sure = confirm('Are you sure you want to remove this agent?');
+        if (!sure) return;
+        agents.splice(index, 1);
+        localStorage.setItem('agents', JSON.stringify(agents));
+        renderAgents();
+      });
       agentList.appendChild(li);
     });
   }
-
-  function openAgentModal() {
-    console.log('[DEBUG] Agent modal manually opened'); // Add this
-    agentModal.classList.remove('hidden');
-    renderAgents();
-  }
-
-  window.closeAgentModal = function () {
-    agentModal.classList.add('hidden');
-  };
-
-  settingsIcon?.addEventListener('click', () => {
-    const isLoggedIn = !document.getElementById('logoutSection')?.classList.contains('hidden');
-    if (isLoggedIn) openAgentModal();
-  });
 
   inviteAgentForm?.addEventListener('submit', (e) => {
     e.preventDefault();
@@ -89,14 +65,6 @@ li.querySelector('.agent-remove')?.addEventListener('click', () => {
 
     console.log(`📧 Invitation sent to ${email}`);
   });
-
-  window.removeAgent = function (index) {
-    const sure = confirm('Are you sure you want to remove this agent?');
-    if (!sure) return;
-    agents.splice(index, 1);
-    localStorage.setItem('agents', JSON.stringify(agents));
-    renderAgents();
-  };
 
   window.activateAgent = function (email) {
     if (!email || !isValidEmail(email)) return;
@@ -206,7 +174,8 @@ li.querySelector('.agent-remove')?.addEventListener('click', () => {
     if (res.ok) {
       document.getElementById('authForms').classList.add('hidden');
       document.getElementById('logoutSection').classList.remove('hidden');
-      agentModal.classList.add('hidden'); // 🛠️ Ensure modal stays hidden
+      agentSection.classList.remove('hidden');
+      renderAgents();
     }
   });
 
@@ -218,5 +187,6 @@ li.querySelector('.agent-remove')?.addEventListener('click', () => {
 
     document.getElementById('authForms').classList.remove('hidden');
     document.getElementById('logoutSection').classList.add('hidden');
+    agentSection.classList.add('hidden');
   });
 });
