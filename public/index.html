@@ -139,32 +139,28 @@
       </div>
     </div>
 
-    <!-- Logout -->
-    <div id="logoutSection" class="hidden">
-      <h2>You're logged in</h2>
-      <button id="logoutBtn">Logout</button>
+<!-- Logout -->
+<div id="logoutSection" class="hidden">
+  <h2>You're logged in</h2>
+  <button id="logoutBtn">Logout</button>
+
+  <!-- Settings Gear (only visible when logged in) -->
+  <div id="settingsIcon" style="position: fixed; top: 20px; right: 20px; cursor: pointer; font-size: 22px;">⚙️</div>
+
+  <!-- Agent Management Modal -->
+  <div id="agentModal" class="hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.5); display: flex; align-items: center; justify-content: center; z-index: 999;">
+    <div style="background: white; padding: 30px; border-radius: 10px; width: 400px; max-height: 80vh; overflow-y: auto;">
+      <h3>Agent Management</h3>
+      <form id="inviteAgentForm">
+        <input type="email" name="agentEmail" placeholder="Invite agent by email" required />
+        <button type="submit">Send Invitation</button>
+      </form>
+      <ul id="agentList" style="margin-top: 20px; padding-left: 0;"></ul>
+      <button onclick="closeAgentModal()" style="margin-top: 15px; background: gray;">Close</button>
     </div>
-
-
-
-    <p id="message"></p>
-          <!-- Settings Gear -->
-<div id="settingsIcon" style="position: fixed; top: 20px; right: 20px; cursor: pointer; font-size: 22px;">⚙️</div>
-
-<!-- Agent Management Modal -->
-<div id="agentModal" class="hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-  background: rgba(0, 0, 0, 0.5); display: flex; align-items: center; justify-content: center; z-index: 999;">
-  <div style="background: white; padding: 30px; border-radius: 10px; width: 400px; max-height: 80vh; overflow-y: auto;">
-    <h3>Agent Management</h3>
-    <form id="inviteAgentForm">
-      <input type="email" name="agentEmail" placeholder="Invite agent by email" required />
-      <button type="submit">Send Invitation</button>
-    </form>
-    <ul id="agentList" style="margin-top: 20px; padding-left: 0;"></ul>
-    <button onclick="closeAgentModal()" style="margin-top: 15px; background: gray;">Close</button>
   </div>
 </div>
-  </div>
 
 
 
