@@ -16,6 +16,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const inviteAgentForm = document.getElementById('inviteAgentForm');
   const agentList = document.getElementById('agentList');
 
+  // Force-close modal on initial load
+  agentModal.classList.add('hidden');
+
   let agents = JSON.parse(localStorage.getItem('agents') || '[]');
 
   function renderAgents() {
@@ -42,7 +45,10 @@ document.addEventListener('DOMContentLoaded', () => {
     agentModal.classList.add('hidden');
   };
 
-  settingsIcon?.addEventListener('click', openAgentModal);
+  settingsIcon?.addEventListener('click', () => {
+    const isLoggedIn = !document.getElementById('logoutSection')?.classList.contains('hidden');
+    if (isLoggedIn) openAgentModal();
+  });
 
   inviteAgentForm?.addEventListener('submit', (e) => {
     e.preventDefault();
@@ -68,7 +74,6 @@ document.addEventListener('DOMContentLoaded', () => {
     inviteAgentForm.reset();
     renderAgents();
 
-    // Simulate sending invitation email
     console.log(`📧 Invitation sent to ${email}`);
   });
 
@@ -89,12 +94,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  // ✅ Email validation regex
   function isValidEmail(email) {
     return /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email);
   }
 
-  // 🔐 Password strength logic
   function getPasswordStrength(pw) {
     let score = 0;
     if (pw.length >= 8) score++;
@@ -116,7 +119,6 @@ document.addEventListener('DOMContentLoaded', () => {
     strengthText.textContent = labels[score];
   });
 
-  // 🔄 Form toggle
   document.getElementById('showLogin')?.addEventListener('click', () => {
     document.getElementById('registerSection').classList.add('hidden');
     document.getElementById('loginSection').classList.remove('hidden');
@@ -127,7 +129,6 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('registerSection').classList.remove('hidden');
   });
 
-  // 🧼 CRM preview updater
   realEstateInput?.addEventListener('input', () => {
     const userInput = realEstateInput.value;
     const sanitized = userInput.replace(/[^a-zA-Z0-9]/g, '').toLowerCase().trim();
@@ -137,7 +138,6 @@ document.addEventListener('DOMContentLoaded', () => {
       : `CRM url preview: <strong>yourrealestate.gesticasa.com</strong>`;
   });
 
-  // 📝 Register with password strength + Stripe checkout
   registerForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
 
@@ -182,7 +182,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // 🔐 Login
   loginForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const data = new URLSearchParams(new FormData(e.target));
@@ -197,7 +196,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // 🔓 Logout
   logoutBtn?.addEventListener('click', async () => {
     const res = await fetch('/logout', { method: 'POST' });
     const text = await res.text();
