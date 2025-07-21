@@ -37,6 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function openAgentModal() {
+    console.log('[DEBUG] Agent modal manually opened'); // Add this
     agentModal.classList.remove('hidden');
     renderAgents();
   }
