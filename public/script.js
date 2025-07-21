@@ -37,7 +37,13 @@ li.innerHTML = `
   <span class="agent-remove">✖</span>
 `;
 
-li.querySelector('.agent-remove')?.addEventListener('click', () => removeAgent(index));
+li.querySelector('.agent-remove')?.addEventListener('click', () => {
+  const sure = confirm('Are you sure you want to remove this agent?');
+  if (!sure) return;
+  agents.splice(index, 1);
+  localStorage.setItem('agents', JSON.stringify(agents));
+  renderAgents();
+});
       agentList.appendChild(li);
     });
   }
