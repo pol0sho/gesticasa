@@ -193,6 +193,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (res.ok) {
       document.getElementById('authForms').classList.add('hidden');
       document.getElementById('logoutSection').classList.remove('hidden');
+      agentModal.classList.add('hidden'); // 🛠️ Ensure modal stays hidden
     }
   });
 
