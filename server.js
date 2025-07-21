@@ -61,7 +61,7 @@ app.post('/invite-agent', async (req, res) => {
   if (!email) return res.status(400).send('Missing email');
 
   const token = crypto.randomBytes(32).toString('hex');
-  const expiration = Date.now() + 1000 * 60 * 60 * 24; // 24 hours
+  const expiration = Math.floor(Date.now() / 1000) + 60 * 60 * 24; // seconds
 
   try {
     // Store token
