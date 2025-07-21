@@ -102,8 +102,8 @@ app.post('/create-checkout-session', async (req, res) => {
         price: 'price_1RnHOxCeECuKcry8F1mth7Lj', // 🔁 Replace with your actual monthly Stripe Price ID
         quantity: 1
       }],
-      success_url: `${process.env.BASE_URL || 'http://localhost:3000'}/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.BASE_URL || 'http://localhost:3000'}/`,
+      success_url: `${process.env.BASE_URL || 'http://inmosuite.onrender.com'}/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.BASE_URL || 'http://inmosuite.onrender.com'}/`,
       metadata: {
         email,
         password,
@@ -120,7 +120,7 @@ app.post('/create-checkout-session', async (req, res) => {
 
 // ✅ Serve success confirmation
 app.get('/success', (req, res) => {
-  res.sendFile(__dirname + '/public/index.html'); // Or redirect
+  res.sendFile(__dirname + '/public/success.html');
 });
 
 // 📬 Stripe webhook to create user after successful payment
