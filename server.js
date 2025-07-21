@@ -84,6 +84,10 @@ app.post('/invite-agent', async (req, res) => {
       }
     });
 
+    app.get('/agent-register', (req, res) => {
+  res.sendFile(__dirname + '/public/agent-register.html');
+});
+
     await transporter.sendMail({
       from: `"Gestihouse" <${process.env.SMTP_FROM || process.env.SMTP_EMAIL}>`,
       to: email,
