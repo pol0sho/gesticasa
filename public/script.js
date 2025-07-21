@@ -16,6 +16,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const inviteAgentForm = document.getElementById('inviteAgentForm');
   const agentList = document.getElementById('agentList');
 
+  document.getElementById('closeAgentBtn')?.addEventListener('click', () => {
+  agentModal.classList.add('hidden');
+});
+
   // Force-close modal on initial load
   agentModal.classList.add('hidden');
 
@@ -25,13 +29,15 @@ document.addEventListener('DOMContentLoaded', () => {
     agentList.innerHTML = '';
     agents.forEach((agent, index) => {
       const li = document.createElement('li');
-      li.innerHTML = `
-        <span>${agent.email}</span>
-        <span class="${agent.status === 'pending' ? 'agent-status-pending' : 'agent-status-active'}">
-          ${agent.status === 'pending' ? 'Email sent, waiting for activation' : 'Agent active'}
-        </span>
-        <span class="agent-remove" onclick="removeAgent(${index})">✖</span>
-      `;
+li.innerHTML = `
+  <span>${agent.email}</span>
+  <span class="${agent.status === 'pending' ? 'agent-status-pending' : 'agent-status-active'}">
+    ${agent.status === 'pending' ? 'Email sent, waiting for activation' : 'Agent active'}
+  </span>
+  <span class="agent-remove">✖</span>
+`;
+
+li.querySelector('.agent-remove')?.addEventListener('click', () => removeAgent(index));
       agentList.appendChild(li);
     });
   }
