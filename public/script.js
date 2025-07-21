@@ -183,27 +183,20 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // 🔐 Login
-loginForm?.addEventListener('submit', async (e) => {
-  e.preventDefault();
+  loginForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const data = new URLSearchParams(new FormData(e.target));
+    const res = await fetch('/login', { method: 'POST', body: data });
+    const text = await res.text();
+    message.textContent = text;
+    message.style.color = res.ok ? 'green' : 'red';
 
-  const formData = new FormData(e.target);
-  const plainData = Object.fromEntries(formData.entries());
-
-  const res = await fetch('/login', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(plainData)
+    if (res.ok) {
+      document.getElementById('authForms').classList.add('hidden');
+      document.getElementById('logoutSection').classList.remove('hidden');
+    }
   });
 
-  const text = await res.text();
-  message.textContent = text;
-  message.style.color = res.ok ? 'green' : 'red';
-
-  if (res.ok) {
-    document.getElementById('authForms').classList.add('hidden');
-    document.getElementById('logoutSection').classList.remove('hidden');
-  }
-});
   // 🔓 Logout
   logoutBtn?.addEventListener('click', async () => {
     const res = await fetch('/logout', { method: 'POST' });
