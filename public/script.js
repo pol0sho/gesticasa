@@ -44,11 +44,14 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('registerSection').classList.remove('hidden');
   });
 
-  // 🌐 Real estate subdomain preview
+  // ✅ Enforce only A–Z letters for real estate name
   realEstateInput?.addEventListener('input', () => {
-    const value = realEstateInput.value.trim().toLowerCase().replace(/\s+/g, '');
-    subdomainPreview.innerHTML = value
-      ? `CRM url preview: <strong>${value}.gesticasa.com</strong>`
+    // Remove any characters that are not A-Z or a-z
+    realEstateInput.value = realEstateInput.value.replace(/[^a-zA-Z0-9]/g, '');
+
+    const sanitized = realEstateInput.value.trim().toLowerCase();
+    subdomainPreview.innerHTML = sanitized
+      ? `CRM url preview: <strong>${sanitized}.gesticasa.com</strong>`
       : `CRM url preview: <strong>yourrealestate.gesticasa.com</strong>`;
   });
 
