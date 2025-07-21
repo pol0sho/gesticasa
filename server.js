@@ -118,6 +118,14 @@ app.post('/create-checkout-session', async (req, res) => {
   }
 });
 
+app.get('/check-session', (req, res) => {
+  if (req.session.userId) {
+    res.json({ loggedIn: true });
+  } else {
+    res.json({ loggedIn: false });
+  }
+});
+
 // ✅ Serve success confirmation
 app.get('/success', (req, res) => {
   res.sendFile(__dirname + '/public/success.html');
