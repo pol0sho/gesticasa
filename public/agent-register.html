@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Agent Registration – Gestihouse</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f5f7fa;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 400px;
+    }
+    h2 {
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    input {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 15px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      background: #1e90ff;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    #message {
+      text-align: center;
+      color: red;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Complete Your Agent Registration</h2>
+    <form id="agentForm">
+      <input type="text" name="name" placeholder="Your full name" required />
+      <input type="password" name="password" placeholder="Set a password" required />
+      <button type="submit">Create Account</button>
+      <p id="message"></p>
+    </form>
+  </div>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get("token");
+    const message = document.getElementById("message");
+
+    if (!token) {
+      message.textContent = "Missing or invalid token.";
+      document.getElementById("agentForm").style.display = "none";
+    }
+
+    document.getElementById("agentForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const payload = {
+        name: formData.get("name"),
+        password: formData.get("password"),
+        token: token
+      };
+
+      try {
+        const res = await fetch("/complete-invite", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        const text = await res.text();
+        if (res.ok) {
+          message.style.color = "green";
+          message.textContent = "✅ Your agent account has been created!";
+          e.target.reset();
+        } else {
+          message.style.color = "red";
+          message.textContent = text;
+        }
+      } catch (err) {
+        message.textContent = "Error completing registration.";
+        console.error(err);
+      }
+    });
+  </script>
+</body>
+</html>

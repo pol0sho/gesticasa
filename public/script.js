@@ -78,6 +78,15 @@ fetch('/check-session')
     inviteAgentForm.reset();
     renderAgents();
 
+    fetch('/invite-agent', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ email })
+})
+.then(res => res.text())
+.then(console.log)
+.catch(err => console.error('Error sending invite:', err));
+
     console.log(`📧 Invitation sent to ${email}`);
   });
 

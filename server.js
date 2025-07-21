@@ -9,6 +9,8 @@ const { Pool } = require('pg');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const app = express();
 const PORT = process.env.PORT || 3000;
+const crypto = require('crypto');
+const nodemailer = require('nodemailer');
 
 // 🧠 PostgreSQL pool
 const pool = new Pool({
@@ -51,6 +53,57 @@ const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 5,
   message: 'Too many login attempts. Try again in 15 minutes.'
+});
+
+app.post('/invite-agent', async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) return res.status(400).send('Missing email');
+
+  const token = crypto.randomBytes(32).toString('hex');
+  const expiration = Date.now() + 1000 * 60 * 60 * 24; // 24 hours
+
+  try {
+    // Store token
+    await pool.query(`
+      INSERT INTO agent_invites (email, token, expires_at)
+      VALUES ($1, $2, to_timestamp($3 / 1000))
+      ON CONFLICT (email) DO UPDATE SET token = $2, expires_at = to_timestamp($3 / 1000)
+    `, [email, token, expiration]);
+
+    const inviteLink = `https://inmosuite.onrender.com/agent-register?token=${token}`;
+
+    // SMTP config using .env values
+    const transporter = nodemailer.createTransport({
+      host: 'smtp.gmail.com',
+      port: 465,
+      secure: true,
+      auth: {
+        user: process.env.SMTP_EMAIL,
+        pass: process.env.SMTP_PASSWORD
+      }
+    });
+
+    await transporter.sendMail({
+      from: `"Gestihouse" <${process.env.SMTP_FROM || process.env.SMTP_EMAIL}>`,
+      to: email,
+      subject: 'Invitation to join your real estate team on Gestihouse',
+      html: `
+        <p>You’ve been invited to join your real estate team on <strong>Gestihouse</strong>.</p>
+        <p>
+          <a href="${inviteLink}" style="padding:10px 20px; background:#2ecc71; color:#fff; text-decoration:none; border-radius:5px">
+            Click here to register your agent account
+          </a>
+        </p>
+        <p>This link is valid for 24 hours.</p>
+      `
+    });
+
+    res.send('✅ Invitation email sent.');
+  } catch (err) {
+    console.error('❌ Failed to send invite:', err);
+    res.status(500).send('Failed to send invitation.');
+  }
 });
 
 // 🔐 Login
