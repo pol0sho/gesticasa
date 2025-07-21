@@ -94,7 +94,7 @@ app.post('/create-checkout-session', async (req, res) => {
         currency: 'eur',
         product_data: {
           name: 'Gesticasa Registration and Monthly Subscription Plan',
-          description: `For ${realEstateName}`
+          description: `Subscription plan for ${realEstateName}`
         },
         unit_amount: 499
       },

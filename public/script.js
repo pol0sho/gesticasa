@@ -11,6 +11,84 @@ document.addEventListener('DOMContentLoaded', () => {
   const strengthBar = document.getElementById('strengthLevel');
   const strengthText = document.getElementById('strengthText');
 
+  const settingsIcon = document.getElementById('settingsIcon');
+  const agentModal = document.getElementById('agentModal');
+  const inviteAgentForm = document.getElementById('inviteAgentForm');
+  const agentList = document.getElementById('agentList');
+
+  let agents = JSON.parse(localStorage.getItem('agents') || '[]');
+
+  function renderAgents() {
+    agentList.innerHTML = '';
+    agents.forEach((agent, index) => {
+      const li = document.createElement('li');
+      li.innerHTML = `
+        <span>${agent.email}</span>
+        <span class="${agent.status === 'pending' ? 'agent-status-pending' : 'agent-status-active'}">
+          ${agent.status === 'pending' ? 'Email sent, waiting for activation' : 'Agent active'}
+        </span>
+        <span class="agent-remove" onclick="removeAgent(${index})">✖</span>
+      `;
+      agentList.appendChild(li);
+    });
+  }
+
+  function openAgentModal() {
+    agentModal.classList.remove('hidden');
+    renderAgents();
+  }
+
+  window.closeAgentModal = function () {
+    agentModal.classList.add('hidden');
+  };
+
+  settingsIcon?.addEventListener('click', openAgentModal);
+
+  inviteAgentForm?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const email = inviteAgentForm.agentEmail.value.trim();
+
+    if (!isValidEmail(email)) {
+      alert('Please enter a valid email.');
+      return;
+    }
+
+    if (agents.length >= 20) {
+      alert('You can only invite up to 20 agents.');
+      return;
+    }
+
+    if (agents.find(a => a.email === email)) {
+      alert('Agent already invited.');
+      return;
+    }
+
+    agents.push({ email, status: 'pending' });
+    localStorage.setItem('agents', JSON.stringify(agents));
+    inviteAgentForm.reset();
+    renderAgents();
+
+    // Simulate sending invitation email
+    console.log(`📧 Invitation sent to ${email}`);
+  });
+
+  window.removeAgent = function (index) {
+    const sure = confirm('Are you sure you want to remove this agent?');
+    if (!sure) return;
+    agents.splice(index, 1);
+    localStorage.setItem('agents', JSON.stringify(agents));
+    renderAgents();
+  };
+
+  window.activateAgent = function (email) {
+    if (!email || !isValidEmail(email)) return;
+    const agent = agents.find(a => a.email === email && a.status === 'pending');
+    if (agent) {
+      agent.status = 'active';
+      localStorage.setItem('agents', JSON.stringify(agents));
+    }
+  };
+
   // ✅ Email validation regex
   function isValidEmail(email) {
     return /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email);
@@ -49,17 +127,11 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('registerSection').classList.remove('hidden');
   });
 
-  // ✅ Enforce only A–Z, 0–9 for real estate name
+  // 🧼 CRM preview updater
   realEstateInput?.addEventListener('input', () => {
-    realEstateInput?.addEventListener('input', () => {
-  const userInput = realEstateInput.value;
-  const sanitized = userInput.replace(/[^a-zA-Z0-9]/g, '').toLowerCase().trim();
+    const userInput = realEstateInput.value;
+    const sanitized = userInput.replace(/[^a-zA-Z0-9]/g, '').toLowerCase().trim();
 
-  subdomainPreview.innerHTML = sanitized
-    ? `CRM url preview: <strong>${sanitized}.gesticasa.com</strong>`
-    : `CRM url preview: <strong>yourrealestate.gesticasa.com</strong>`;
-});
-    const sanitized = realEstateInput.value.trim().toLowerCase();
     subdomainPreview.innerHTML = sanitized
       ? `CRM url preview: <strong>${sanitized}.gesticasa.com</strong>`
       : `CRM url preview: <strong>yourrealestate.gesticasa.com</strong>`;
