@@ -17,15 +17,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let agents = JSON.parse(localStorage.getItem('agents') || '[]');
 
-  fetch('/check-session')
+fetch('/check-session')
   .then(res => res.json())
   .then(data => {
     if (data.loggedIn) {
       document.getElementById('authForms').classList.add('hidden');
       document.getElementById('logoutSection').classList.remove('hidden');
+      agentSection.classList.remove('hidden');
+      renderAgents(); // <- this!
     } else {
       document.getElementById('authForms').classList.remove('hidden');
       document.getElementById('logoutSection').classList.add('hidden');
+      agentSection.classList.add('hidden');
     }
   });
 
