@@ -11,6 +11,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const strengthBar = document.getElementById('strengthLevel');
   const strengthText = document.getElementById('strengthText');
 
+  // ✅ Email validation regex
+  function isValidEmail(email) {
+    return /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email);
+  }
+
   // 🔐 Password strength logic
   function getPasswordStrength(pw) {
     let score = 0;
@@ -44,20 +49,34 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('registerSection').classList.remove('hidden');
   });
 
-  // ✅ Enforce only A–Z letters for real estate name
+  // ✅ Enforce only A–Z, 0–9 for real estate name
   realEstateInput?.addEventListener('input', () => {
-    // Remove any characters that are not A-Z or a-z
-    realEstateInput.value = realEstateInput.value.replace(/[^a-zA-Z0-9]/g, '');
+    realEstateInput?.addEventListener('input', () => {
+  const userInput = realEstateInput.value;
+  const sanitized = userInput.replace(/[^a-zA-Z0-9]/g, '').toLowerCase().trim();
 
+  subdomainPreview.innerHTML = sanitized
+    ? `CRM url preview: <strong>${sanitized}.gesticasa.com</strong>`
+    : `CRM url preview: <strong>yourrealestate.gesticasa.com</strong>`;
+});
     const sanitized = realEstateInput.value.trim().toLowerCase();
     subdomainPreview.innerHTML = sanitized
       ? `CRM url preview: <strong>${sanitized}.gesticasa.com</strong>`
       : `CRM url preview: <strong>yourrealestate.gesticasa.com</strong>`;
   });
 
-  // 📝 Register with password strength + stripe checkout
+  // 📝 Register with password strength + Stripe checkout
   registerForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
+
+    const emailInput = registerForm.querySelector('input[name="email"]');
+    const email = emailInput.value.trim();
+
+    if (!isValidEmail(email)) {
+      message.textContent = 'Invalid email format.';
+      message.style.color = 'red';
+      return;
+    }
 
     const strength = getPasswordStrength(registerPasswordInput.value);
     if (strength < 2) {
